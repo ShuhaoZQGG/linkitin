@@ -16,5 +16,4 @@
 - Image upload (`upload_image`) via two-step Voyager media endpoint
 - Token-bucket rate limiter (10 req/min, random jitter, exponential backoff)
 - Pydantic models (`Post`, `User`, `MediaItem`)
-- GoViral bridge script (`scripts/linkitin_bridge.py`)
 - GitHub Actions CI workflow

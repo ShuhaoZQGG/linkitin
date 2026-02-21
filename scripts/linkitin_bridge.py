@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bridge script for GoViral subprocess integration.
+"""Bridge script for subprocess integration.
 
 Reads JSON commands from stdin (one per line), executes them via LinkitinClient,
 and writes JSON responses to stdout (one per line).

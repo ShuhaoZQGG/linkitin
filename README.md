@@ -138,20 +138,6 @@ All requests go through a token-bucket rate limiter: **10 requests per minute** 
 | `delete_post(post_urn)` | Delete a post by URN |
 | `close()` | Close the HTTP session |
 
-## GoViral Integration
-
-GoViral uses linkitin as a LinkedIn fallback when official API credentials are unavailable.
-
-**Bridge script**: `scripts/linkitin_bridge.py` reads JSON commands from stdin and writes JSON responses to stdout, allowing Go to drive linkitin via subprocess.
-
-**Setup from GoViral**:
-
-```sh
-goviral linkitin-login    # extracts LinkedIn cookies from Chrome
-```
-
-This saves cookies to `~/.goviral/linkitin_cookies.json` (GoViral's own path, passed explicitly).
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. PRs welcome!
