@@ -96,7 +96,7 @@ def _parse_search_response(data: dict[str, Any], limit: int) -> list[Post]:
 
         author = _extract_author(entity, profiles)
         likes, comments, reposts, impressions = _extract_social_counts(
-            urn, entity, social_details
+            urn, entity, {}, social_details
         )
         media = _extract_media(entity)
         created_at = _extract_created_at(entity)
