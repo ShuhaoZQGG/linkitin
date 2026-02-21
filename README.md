@@ -1,7 +1,7 @@
-# linkit
+# linkitin
 
-![PyPI](https://img.shields.io/pypi/v/linkit)
-![Python](https://img.shields.io/pypi/pyversions/linkit)
+![PyPI](https://img.shields.io/pypi/v/linkitin)
+![Python](https://img.shields.io/pypi/pyversions/linkitin)
 ![License](https://img.shields.io/github/license/shuhaozhang/linkit)
 ![Tests](https://github.com/shuhaozhang/linkit/actions/workflows/test.yml/badge.svg)
 
@@ -12,12 +12,18 @@ Python library for LinkedIn automation via the Voyager API. Fetch posts, search 
 ## Install
 
 ```sh
+pip install linkitin
+```
+
+Requires Python 3.10+.
+
+### Development
+
+```sh
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 ```
-
-Requires Python 3.10+.
 
 ## Authentication
 
