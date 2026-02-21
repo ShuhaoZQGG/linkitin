@@ -5,12 +5,12 @@ from typing import Optional
 
 import httpx
 
-from linkit.exceptions import SessionError
-from linkit.rate_limiter import RateLimiter
+from linkitin.exceptions import SessionError
+from linkitin.rate_limiter import RateLimiter
 
 
 DEFAULT_COOKIES_PATH = os.path.join(
-    os.path.expanduser("~"), ".linkit", "cookies.json"
+    os.path.expanduser("~"), ".linkitin", "cookies.json"
 )
 
 _DEFAULT_USER_AGENT = (
@@ -40,7 +40,7 @@ class Session:
 
     Args:
         cookies_path: Path to store/load session cookies. Defaults to
-            ``~/.linkit/cookies.json``.
+            ``~/.linkitin/cookies.json``.
         timezone: Timezone name for the x-li-track header (e.g.
             ``"America/New_York"``). Detected from the system if not provided.
         timezone_offset: UTC offset in hours (e.g. ``-5.0``). Computed from
@@ -149,8 +149,8 @@ class Session:
                                      json_data: Optional[dict] = None) -> httpx.Response:
         """Route a request through Chrome via AppleScript."""
         import asyncio
-        from linkit.chrome_proxy import chrome_voyager_request
-        from linkit.endpoints import BASE_URL
+        from linkitin.chrome_proxy import chrome_voyager_request
+        from linkitin.endpoints import BASE_URL
 
         # Convert full URL to path.
         path = url.replace(BASE_URL, "") if url.startswith(BASE_URL) else url

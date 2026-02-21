@@ -1,17 +1,17 @@
 from datetime import datetime
 from typing import Optional
 
-from linkit.auth import extract_cookies_from_browser, login_with_cookies, validate_session
-from linkit.exceptions import AuthError
-from linkit.models import Post
-from linkit.session import Session
+from linkitin.auth import extract_cookies_from_browser, login_with_cookies, validate_session
+from linkitin.exceptions import AuthError
+from linkitin.models import Post
+from linkitin.session import Session
 
 
-class LinkitClient:
+class LinkitinClient:
     """Main client for LinkedIn automation via the Voyager API.
 
     Usage:
-        async with LinkitClient() as client:
+        async with LinkitinClient() as client:
             await client.login_from_browser()
             posts = await client.get_my_posts(limit=10)
     """
@@ -34,7 +34,7 @@ class LinkitClient:
             user_agent=user_agent,
         )
 
-    async def __aenter__(self) -> "LinkitClient":
+    async def __aenter__(self) -> "LinkitinClient":
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -91,7 +91,7 @@ class LinkitClient:
         Returns:
             List of Post objects.
         """
-        from linkit.feed import get_my_posts
+        from linkitin.feed import get_my_posts
         return await get_my_posts(self.session, limit=limit)
 
     async def search_posts(self, keywords: str, limit: int = 20) -> list[Post]:
@@ -104,7 +104,7 @@ class LinkitClient:
         Returns:
             List of Post objects matching the search.
         """
-        from linkit.search import search_posts
+        from linkitin.search import search_posts
         return await search_posts(self.session, keywords=keywords, limit=limit)
 
     async def get_feed(self, limit: int = 20) -> list[Post]:
@@ -116,7 +116,7 @@ class LinkitClient:
         Returns:
             List of Post objects from the feed.
         """
-        from linkit.feed import get_feed
+        from linkitin.feed import get_feed
         return await get_feed(self.session, limit=limit)
 
     async def get_trending_posts(
@@ -144,7 +144,7 @@ class LinkitClient:
         Returns:
             List of Post objects sorted by engagement (highest first).
         """
-        from linkit.feed import get_trending_posts
+        from linkitin.feed import get_trending_posts
         return await get_trending_posts(
             self.session, topic=topic, period=period, limit=limit,
             from_followed=from_followed, scrolls=scrolls,
@@ -156,7 +156,7 @@ class LinkitClient:
         Args:
             post_urn: The URN of the post to delete.
         """
-        from linkit.poster import delete_post
+        from linkitin.poster import delete_post
         await delete_post(self.session, post_urn)
 
     async def create_post(self, text: str, visibility: str = "PUBLIC") -> str:
@@ -169,7 +169,7 @@ class LinkitClient:
         Returns:
             The URN of the created post.
         """
-        from linkit.poster import create_post
+        from linkitin.poster import create_post
         return await create_post(self.session, text=text, visibility=visibility)
 
     async def repost(self, share_urn: str, text: str = "") -> str:
@@ -184,7 +184,7 @@ class LinkitClient:
         Returns:
             The URN of the new repost.
         """
-        from linkit.poster import repost
+        from linkitin.poster import repost
         return await repost(self.session, share_urn=share_urn, text=text)
 
     async def upload_image(self, image_data: bytes, filename: str) -> str:
@@ -197,7 +197,7 @@ class LinkitClient:
         Returns:
             Media URN for use in create_post_with_image.
         """
-        from linkit.media import upload_image
+        from linkitin.media import upload_image
         return await upload_image(self.session, image_data=image_data, filename=filename)
 
     async def create_post_with_image(
@@ -214,8 +214,8 @@ class LinkitClient:
         Returns:
             The URN of the created post.
         """
-        from linkit.media import upload_image
-        from linkit.poster import create_post_with_media
+        from linkitin.media import upload_image
+        from linkitin.poster import create_post_with_media
         media_urn = await upload_image(self.session, image_data=image_data, filename=filename)
         return await create_post_with_media(self.session, text=text, media_urn=media_urn, visibility=visibility)
 
@@ -232,7 +232,7 @@ class LinkitClient:
         Returns:
             The URN of the created scheduled post.
         """
-        from linkit.poster import create_scheduled_post
+        from linkitin.poster import create_scheduled_post
         return await create_scheduled_post(
             self.session, text=text, scheduled_at=scheduled_at, visibility=visibility,
         )
@@ -257,8 +257,8 @@ class LinkitClient:
         Returns:
             The URN of the created scheduled post.
         """
-        from linkit.media import upload_image
-        from linkit.poster import create_scheduled_post_with_media
+        from linkitin.media import upload_image
+        from linkitin.poster import create_scheduled_post_with_media
         media_urn = await upload_image(self.session, image_data=image_data, filename=filename)
         return await create_scheduled_post_with_media(
             self.session, text=text, media_urn=media_urn,

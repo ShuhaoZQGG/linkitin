@@ -1,11 +1,11 @@
 import asyncio
 from typing import Any
 
-from linkit.endpoints import SEARCH
-from linkit.exceptions import LinkitError
-from linkit.feed import _extract_author, _extract_created_at, _extract_media, _extract_social_counts, _extract_text
-from linkit.models import Post
-from linkit.session import Session
+from linkitin.endpoints import SEARCH
+from linkitin.exceptions import LinkitinError
+from linkitin.feed import _extract_author, _extract_created_at, _extract_media, _extract_social_counts, _extract_text
+from linkitin.models import Post
+from linkitin.session import Session
 
 
 async def search_posts(session: Session, keywords: str, limit: int = 20) -> list[Post]:
@@ -23,7 +23,7 @@ async def search_posts(session: Session, keywords: str, limit: int = 20) -> list
         List of Post objects matching the search.
     """
     try:
-        from linkit.chrome_data import extract_search_data
+        from linkitin.chrome_data import extract_search_data
         loop = asyncio.get_event_loop()
         data = await loop.run_in_executor(None, extract_search_data, keywords)
         return _parse_search_response(data, limit)
@@ -42,11 +42,11 @@ async def search_posts(session: Session, keywords: str, limit: int = 20) -> list
 
     response = await session.get(SEARCH, params=params)
     if response.status_code == 429:
-        raise LinkitError("rate limited by LinkedIn - try again later")
+        raise LinkitinError("rate limited by LinkedIn - try again later")
     if response.status_code == 403:
-        raise LinkitError("forbidden - cookies may be expired, re-login required")
+        raise LinkitinError("forbidden - cookies may be expired, re-login required")
     if response.status_code != 200:
-        raise LinkitError(f"search failed: HTTP {response.status_code}")
+        raise LinkitinError(f"search failed: HTTP {response.status_code}")
 
     data = response.json()
     return _parse_search_response(data, limit)

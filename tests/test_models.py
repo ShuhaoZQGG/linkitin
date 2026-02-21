@@ -1,9 +1,9 @@
-"""Unit tests for linkit.models Pydantic models."""
+"""Unit tests for linkitin.models Pydantic models."""
 from datetime import datetime, timezone
 
 import pytest
 
-from linkit.models import Post, User, MediaItem
+from linkitin.models import Post, User, MediaItem
 
 
 class TestUser:

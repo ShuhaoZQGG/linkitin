@@ -7,11 +7,11 @@ import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from linkit import LinkitClient
+from linkitin import LinkitinClient
 
 
 async def main():
-    async with LinkitClient() as client:
+    async with LinkitinClient() as client:
         print("Logging in via Chrome proxy...")
         await client.login_from_browser()
         print("Authenticated via Chrome proxy\n")

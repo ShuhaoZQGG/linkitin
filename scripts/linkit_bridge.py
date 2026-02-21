@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bridge script for GoViral subprocess integration.
 
-Reads JSON commands from stdin (one per line), executes them via LinkitClient,
+Reads JSON commands from stdin (one per line), executes them via LinkitinClient,
 and writes JSON responses to stdout (one per line).
 
 Commands:
@@ -47,20 +47,20 @@ import asyncio
 import base64
 from datetime import datetime
 
-# Add parent directory to path so linkit package can be found when running
+# Add parent directory to path so linkitin package can be found when running
 # from the scripts directory or from Go's embedded copy.
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Also add the linkit package directory for when the bridge is embedded
-# alongside the linkit package in Go.
-linkit_pkg_dir = os.path.join(script_dir, "..")
-if linkit_pkg_dir not in sys.path:
-    sys.path.insert(0, os.path.abspath(linkit_pkg_dir))
+# Also add the linkitin package directory for when the bridge is embedded
+# alongside the linkitin package in Go.
+linkitin_pkg_dir = os.path.join(script_dir, "..")
+if linkitin_pkg_dir not in sys.path:
+    sys.path.insert(0, os.path.abspath(linkitin_pkg_dir))
 
-from linkit import LinkitClient
+from linkitin import LinkitinClient
 
 
 async def handle_command(client, cmd):
@@ -192,7 +192,7 @@ async def handle_command(client, cmd):
 
 
 async def main():
-    client = LinkitClient()
+    client = LinkitinClient()
 
     # Try to load saved cookies on startup.
     try:

@@ -2,8 +2,8 @@
 
 ![PyPI](https://img.shields.io/pypi/v/linkitin)
 ![Python](https://img.shields.io/pypi/pyversions/linkitin)
-![License](https://img.shields.io/github/license/shuhaozhang/linkit)
-![Tests](https://github.com/shuhaozhang/linkit/actions/workflows/test.yml/badge.svg)
+![License](https://img.shields.io/github/license/shuhaozhang/linkitin)
+![Tests](https://github.com/shuhaozhang/linkitin/actions/workflows/test.yml/badge.svg)
 
 Python library for LinkedIn automation via the Voyager API. Fetch posts, search content, and publish — all through an async client.
 
@@ -30,7 +30,7 @@ pip install -e ".[dev]"
 **Chrome proxy mode** (recommended — requires macOS and Chrome logged into LinkedIn):
 
 ```python
-async with LinkitClient() as client:
+async with LinkitinClient() as client:
     await client.login_from_browser()  # routes API requests through Chrome via AppleScript
 ```
 
@@ -39,7 +39,7 @@ Chrome 145+ uses App-Bound Encryption for cookies, making them inaccessible to e
 **Manual cookie input** (if you have raw `li_at` and `JSESSIONID` values):
 
 ```python
-async with LinkitClient() as client:
+async with LinkitinClient() as client:
     await client.login_with_cookies(li_at="AQED...", jsessionid="ajax:123...")
 ```
 
@@ -49,10 +49,10 @@ Cookies from manual input are saved to disk and reused on subsequent runs via `l
 
 ```python
 import asyncio
-from linkit import LinkitClient
+from linkitin import LinkitinClient
 
 async def main():
-    async with LinkitClient() as client:
+    async with LinkitinClient() as client:
         # Authenticate
         if not await client.login_from_saved():
             await client.login_from_browser()
@@ -101,11 +101,11 @@ asyncio.run(main())
 
 ## Configuration
 
-`LinkitClient` accepts optional parameters to override defaults:
+`LinkitinClient` accepts optional parameters to override defaults:
 
 ```python
-client = LinkitClient(
-    cookies_path="~/.myapp/linkedin_cookies.json",  # default: ~/.linkit/cookies.json
+client = LinkitinClient(
+    cookies_path="~/.myapp/linkedin_cookies.json",  # default: ~/.linkitin/cookies.json
     timezone="America/New_York",                     # default: detected from system
     timezone_offset=-5.0,                            # default: computed from system
     display_width=1440,                              # default: 1920
@@ -140,17 +140,17 @@ All requests go through a token-bucket rate limiter: **10 requests per minute** 
 
 ## GoViral Integration
 
-GoViral uses linkit as a LinkedIn fallback when official API credentials are unavailable.
+GoViral uses linkitin as a LinkedIn fallback when official API credentials are unavailable.
 
-**Bridge script**: `scripts/linkit_bridge.py` reads JSON commands from stdin and writes JSON responses to stdout, allowing Go to drive linkit via subprocess.
+**Bridge script**: `scripts/linkitin_bridge.py` reads JSON commands from stdin and writes JSON responses to stdout, allowing Go to drive linkitin via subprocess.
 
 **Setup from GoViral**:
 
 ```sh
-goviral linkit-login    # extracts LinkedIn cookies from Chrome
+goviral linkitin-login    # extracts LinkedIn cookies from Chrome
 ```
 
-This saves cookies to `~/.goviral/linkit_cookies.json` (GoViral's own path, passed explicitly).
+This saves cookies to `~/.goviral/linkitin_cookies.json` (GoViral's own path, passed explicitly).
 
 ## Contributing
 

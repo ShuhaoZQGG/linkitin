@@ -1,6 +1,6 @@
-from linkit.endpoints import MEDIA_UPLOAD_METADATA
-from linkit.exceptions import MediaError, RateLimitError
-from linkit.session import Session
+from linkitin.endpoints import MEDIA_UPLOAD_METADATA
+from linkitin.exceptions import MediaError, RateLimitError
+from linkitin.session import Session
 
 
 async def upload_image(session: Session, image_data: bytes, filename: str) -> str:

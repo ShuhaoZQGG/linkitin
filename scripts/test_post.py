@@ -11,8 +11,8 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from linkit import LinkitClient
-from linkit.poster import delete_post
+from linkitin import LinkitinClient
+from linkitin.poster import delete_post
 
 
 def _make_test_png() -> bytes:
@@ -37,7 +37,7 @@ def _make_test_png() -> bytes:
 
 
 async def main():
-    async with LinkitClient() as client:
+    async with LinkitinClient() as client:
         print("Logging in via Chrome proxy...")
         await client.login_from_browser()
         print("Authenticated via Chrome proxy\n")
@@ -60,7 +60,7 @@ async def main():
         print("\n\n=== Text Post ===")
         try:
             post_urn = await client.create_post(
-                text=f"[linkit test] text post — {ts}",
+                text=f"[linkitin test] text post — {ts}",
                 visibility="CONNECTIONS",
             )
             print(f"Success — post URN: {post_urn}")
@@ -76,7 +76,7 @@ async def main():
         print("\n\n=== Image Post ===")
         try:
             post_urn = await client.create_post_with_image(
-                text=f"[linkit test] image post — {ts}",
+                text=f"[linkitin test] image post — {ts}",
                 image_data=test_image,
                 filename="test_red_square.png",
                 visibility="CONNECTIONS",

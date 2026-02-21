@@ -1,4 +1,4 @@
-"""Tests for linkit.session."""
+"""Tests for linkitin.session."""
 import json
 import os
 import time
@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from linkit.session import Session, _detect_timezone_offset, _detect_timezone_name
+from linkitin.session import Session, _detect_timezone_offset, _detect_timezone_name
 
 
 class TestTimezoneDetection:
@@ -48,7 +48,7 @@ class TestTimezoneDetection:
 class TestSessionInit:
     def test_default_cookies_path(self):
         s = Session()
-        assert ".linkit" in s.cookies_path
+        assert ".linkitin" in s.cookies_path
         assert s.cookies_path.endswith("cookies.json")
 
     def test_custom_cookies_path(self, tmp_path):
@@ -124,7 +124,7 @@ class TestCsrfToken:
         assert s._get_csrf_token() == "ajax:999"
 
     def test_get_csrf_token_raises_without_jsessionid(self):
-        from linkit.exceptions import SessionError
+        from linkitin.exceptions import SessionError
         s = Session()
         with pytest.raises(SessionError):
             s._get_csrf_token()
@@ -144,7 +144,7 @@ class TestSaveCookies:
         assert s2._extra_cookies == {"x": "1"}
 
     def test_save_raises_without_cookies(self, tmp_path):
-        from linkit.exceptions import SessionError
+        from linkitin.exceptions import SessionError
         s = Session(cookies_path=str(tmp_path / "c.json"))
         with pytest.raises(SessionError):
             s.save_cookies()

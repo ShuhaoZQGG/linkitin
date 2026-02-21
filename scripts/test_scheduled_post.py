@@ -18,8 +18,8 @@ from datetime import datetime, timezone, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from linkit import LinkitClient
-from linkit.endpoints import GRAPHQL, RESHARE_QUERY_ID
+from linkitin import LinkitinClient
+from linkitin.endpoints import GRAPHQL, RESHARE_QUERY_ID
 
 
 def _round_to_next_quarter_hour(dt: datetime) -> datetime:
@@ -30,7 +30,7 @@ def _round_to_next_quarter_hour(dt: datetime) -> datetime:
 
 
 async def main():
-    async with LinkitClient() as client:
+    async with LinkitinClient() as client:
         print("Logging in via Chrome proxy...")
         await client.login_from_browser()
         print("Authenticated via Chrome proxy\n")
@@ -51,7 +51,7 @@ async def main():
                 "post": {
                     "allowedCommentersScope": "ALL",
                     "commentary": {
-                        "text": f"[linkit test] scheduled post — {ts}\n\nThis is a test of the scheduling feature. Safe to delete.",
+                        "text": f"[linkitin test] scheduled post — {ts}\n\nThis is a test of the scheduling feature. Safe to delete.",
                         "attributesV2": [],
                     },
                     "intendedShareLifeCycleState": "SCHEDULED",

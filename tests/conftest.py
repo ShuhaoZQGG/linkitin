@@ -1,11 +1,11 @@
-"""Shared fixtures for linkit tests."""
+"""Shared fixtures for linkitin tests."""
 import json
 from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
 
-from linkit.session import Session
+from linkitin.session import Session
 
 
 def make_response(

@@ -12,7 +12,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from linkit.chrome_proxy import _find_linkedin_tab_and_exec
+from linkitin.chrome_proxy import _find_linkedin_tab_and_exec
 
 
 def main():

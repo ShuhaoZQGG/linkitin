@@ -1,11 +1,11 @@
-"""Tests for linkit.feed."""
+"""Tests for linkitin.feed."""
 from datetime import datetime, timezone
 
 from unittest.mock import patch
 
 import pytest
 
-from linkit.feed import (
+from linkitin.feed import (
     _extract_author,
     _extract_created_at,
     _extract_inner_urn,
@@ -19,8 +19,8 @@ from linkit.feed import (
     get_feed,
     get_my_posts,
 )
-from linkit.exceptions import LinkitError
-from linkit.models import Post
+from linkitin.exceptions import LinkitinError
+from linkitin.models import Post
 from tests.conftest import make_response
 
 
@@ -291,27 +291,27 @@ class TestGetMyPosts:
                 }
             ]
         })
-        with patch("linkit.feed._chrome_extract", return_value=None):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
             posts = await get_my_posts(mock_session, limit=5)
         assert len(posts) == 1
         assert posts[0].text == "My post"
 
     async def test_429_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=429)
-        with patch("linkit.feed._chrome_extract", return_value=None):
-            with pytest.raises(LinkitError, match="rate limited"):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
+            with pytest.raises(LinkitinError, match="rate limited"):
                 await get_my_posts(mock_session)
 
     async def test_403_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=403)
-        with patch("linkit.feed._chrome_extract", return_value=None):
-            with pytest.raises(LinkitError, match="forbidden"):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
+            with pytest.raises(LinkitinError, match="forbidden"):
                 await get_my_posts(mock_session)
 
     async def test_500_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=500)
-        with patch("linkit.feed._chrome_extract", return_value=None):
-            with pytest.raises(LinkitError, match="HTTP 500"):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
+            with pytest.raises(LinkitinError, match="HTTP 500"):
                 await get_my_posts(mock_session)
 
 
@@ -326,18 +326,18 @@ class TestGetFeed:
                 }
             ]
         })
-        with patch("linkit.feed._chrome_extract", return_value=None):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
             posts = await get_feed(mock_session, limit=10)
         assert len(posts) == 1
 
     async def test_429_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=429)
-        with patch("linkit.feed._chrome_extract", return_value=None):
-            with pytest.raises(LinkitError, match="rate limited"):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
+            with pytest.raises(LinkitinError, match="rate limited"):
                 await get_feed(mock_session)
 
     async def test_403_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=403)
-        with patch("linkit.feed._chrome_extract", return_value=None):
-            with pytest.raises(LinkitError, match="forbidden"):
+        with patch("linkitin.feed._chrome_extract", return_value=None):
+            with pytest.raises(LinkitinError, match="forbidden"):
                 await get_feed(mock_session)

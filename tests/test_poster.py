@@ -1,11 +1,11 @@
-"""Tests for linkit.poster."""
+"""Tests for linkitin.poster."""
 import math
 from datetime import datetime, timezone, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
 
-from linkit.poster import (
+from linkitin.poster import (
     _extract_graphql_share_urn,
     _extract_post_urn,
     _snap_to_quarter_hour_ms,
@@ -15,7 +15,7 @@ from linkit.poster import (
     delete_post,
     repost,
 )
-from linkit.exceptions import PostError, RateLimitError
+from linkitin.exceptions import PostError, RateLimitError
 from tests.conftest import make_response
 
 
@@ -230,7 +230,7 @@ class TestDeletePost:
         mock_session.rate_limiter.acquire = AM()
         mock_session.use_chrome_proxy = False
         # Need real methods for CSRF
-        from linkit.session import Session
+        from linkitin.session import Session
         mock_session._get_csrf_token = Session._get_csrf_token.__get__(mock_session)
         mock_session._build_cookies = Session._build_cookies.__get__(mock_session)
         await delete_post(mock_session, "urn:li:share:501")
@@ -242,7 +242,7 @@ class TestDeletePost:
         mock_session._ensure_client = AM(return_value=mock_client)
         mock_session.rate_limiter.acquire = AM()
         mock_session.use_chrome_proxy = False
-        from linkit.session import Session
+        from linkitin.session import Session
         mock_session._get_csrf_token = Session._get_csrf_token.__get__(mock_session)
         mock_session._build_cookies = Session._build_cookies.__get__(mock_session)
         with pytest.raises(RateLimitError):

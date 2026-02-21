@@ -1,4 +1,4 @@
-# Contributing to linkit
+# Contributing to linkitin
 
 Thank you for your interest in contributing!
 

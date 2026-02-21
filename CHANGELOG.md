@@ -3,7 +3,7 @@
 ## [0.1.0] - 2025-06-15
 
 ### Added
-- `LinkitClient` async context manager for LinkedIn Voyager API automation
+- `LinkitinClient` async context manager for LinkedIn Voyager API automation
 - Chrome proxy mode (`login_from_browser`) — routes requests through Chrome via AppleScript to bypass App-Bound Encryption (Chrome 145+)
 - Manual cookie authentication (`login_with_cookies`) with disk persistence
 - Saved cookie re-use (`login_from_saved`)
@@ -16,5 +16,5 @@
 - Image upload (`upload_image`) via two-step Voyager media endpoint
 - Token-bucket rate limiter (10 req/min, random jitter, exponential backoff)
 - Pydantic models (`Post`, `User`, `MediaItem`)
-- GoViral bridge script (`scripts/linkit_bridge.py`)
+- GoViral bridge script (`scripts/linkitin_bridge.py`)
 - GitHub Actions CI workflow

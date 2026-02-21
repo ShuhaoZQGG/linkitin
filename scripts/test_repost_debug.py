@@ -7,8 +7,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from linkit import LinkitClient
-from linkit.endpoints import CREATE_POST
+from linkitin import LinkitinClient
+from linkitin.endpoints import CREATE_POST
 
 
 async def try_repost(session, urn_value, label):
@@ -36,7 +36,7 @@ async def try_repost(session, urn_value, label):
 
 
 async def main():
-    async with LinkitClient() as client:
+    async with LinkitinClient() as client:
         print("Logging in via Chrome proxy...")
         await client.login_from_browser()
         print("Authenticated\n")
@@ -57,7 +57,7 @@ async def main():
         print(f"Raw URN: {post.urn}")
 
         # Extract the activity ID
-        from linkit.feed import _extract_inner_urn
+        from linkitin.feed import _extract_inner_urn
         activity_urn = _extract_inner_urn(post.urn) or post.urn
         print(f"Inner URN: {activity_urn}")
 

@@ -1,4 +1,4 @@
-# linkit API Reference
+# linkitin API Reference
 
 Python library for LinkedIn automation via the Voyager API. Fetch posts, search content, and publish — all through an async client.
 
@@ -14,10 +14,10 @@ Requires **Python 3.10+**.
 
 ```python
 import asyncio
-from linkit import LinkitClient
+from linkitin import LinkitinClient
 
 async def main():
-    async with LinkitClient() as client:
+    async with LinkitinClient() as client:
         if not await client.login_from_saved():
             await client.login_from_browser()
 
@@ -30,19 +30,19 @@ asyncio.run(main())
 
 ---
 
-## LinkitClient
+## LinkitinClient
 
 ```python
-from linkit import LinkitClient
+from linkitin import LinkitinClient
 
-client = LinkitClient(cookies_path: str | None = None)
+client = LinkitinClient(cookies_path: str | None = None)
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `cookies_path` | `str \| None` | `None` | Custom path for cookie storage. Uses default location when `None`. |
 
-`LinkitClient` is an async context manager — use `async with` for automatic cleanup.
+`LinkitinClient` is an async context manager — use `async with` for automatic cleanup.
 
 ---
 
@@ -59,7 +59,7 @@ Extract cookies from Chrome and authenticate. Tries `browser_cookie3` first; if 
 **Raises:** `AuthError` — if cookies cannot be extracted or the session is invalid.
 
 ```python
-async with LinkitClient() as client:
+async with LinkitinClient() as client:
     await client.login_from_browser()
 ```
 
@@ -81,7 +81,7 @@ Authenticate with manually provided LinkedIn cookies.
 **Raises:** `AuthError` — if the provided cookies are invalid or expired.
 
 ```python
-async with LinkitClient() as client:
+async with LinkitinClient() as client:
     await client.login_with_cookies(
         li_at="AQED...",
         jsessionid="ajax:123...",
@@ -101,7 +101,7 @@ Load previously saved cookies from disk and validate them.
 **Returns:** `True` if saved cookies were loaded and are still valid, `False` otherwise.
 
 ```python
-async with LinkitClient() as client:
+async with LinkitinClient() as client:
     if not await client.login_from_saved():
         await client.login_from_browser()  # fallback
 ```
@@ -405,7 +405,7 @@ Delete a post by its URN.
 |-----------|------|-------------|
 | `post_urn` | `str` | URN of the post to delete. |
 
-**Raises:** `LinkitError` if the request fails.
+**Raises:** `LinkitinError` if the request fails.
 
 ```python
 await client.delete_post("urn:li:share:7654321")
@@ -424,7 +424,7 @@ async def close() -> None
 Close the underlying HTTP session. Called automatically when using `async with`.
 
 ```python
-client = LinkitClient()
+client = LinkitinClient()
 try:
     await client.login_from_browser()
     posts = await client.get_my_posts()
@@ -441,7 +441,7 @@ All models are [Pydantic](https://docs.pydantic.dev/) `BaseModel` subclasses.
 ### `Post`
 
 ```python
-from linkit.models import Post
+from linkitin.models import Post
 ```
 
 | Field | Type | Default | Description |
@@ -460,7 +460,7 @@ from linkit.models import Post
 ### `User`
 
 ```python
-from linkit.models import User
+from linkitin.models import User
 ```
 
 | Field | Type | Default | Description |
@@ -474,7 +474,7 @@ from linkit.models import User
 ### `MediaItem`
 
 ```python
-from linkit.models import MediaItem
+from linkitin.models import MediaItem
 ```
 
 | Field | Type | Default | Description |
@@ -487,10 +487,10 @@ from linkit.models import MediaItem
 
 ## Exceptions
 
-All exceptions inherit from `LinkitError`.
+All exceptions inherit from `LinkitinError`.
 
 ```
-LinkitError
+LinkitinError
 ├── AuthError
 ├── RateLimitError
 ├── PostError
@@ -500,7 +500,7 @@ LinkitError
 
 | Exception | When it's raised |
 |-----------|-----------------|
-| `LinkitError` | Base class for all linkit errors. |
+| `LinkitinError` | Base class for all linkitin errors. |
 | `AuthError` | Cookie extraction fails, or session cookies are invalid/expired. |
 | `RateLimitError` | Rate limit exceeded after backoff retries. |
 | `PostError` | Post creation or retrieval fails. |
@@ -508,7 +508,7 @@ LinkitError
 | `SessionError` | HTTP session or connection error. |
 
 ```python
-from linkit.exceptions import AuthError, RateLimitError
+from linkitin.exceptions import AuthError, RateLimitError
 
 try:
     await client.login_from_browser()

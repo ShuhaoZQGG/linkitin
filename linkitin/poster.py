@@ -1,9 +1,9 @@
 import math
 from datetime import datetime, timezone
 
-from linkit.endpoints import CREATE_POST
-from linkit.exceptions import PostError, RateLimitError
-from linkit.session import Session
+from linkitin.endpoints import CREATE_POST
+from linkitin.exceptions import PostError, RateLimitError
+from linkitin.session import Session
 
 
 def _snap_to_quarter_hour_ms(dt: datetime) -> str:
@@ -183,7 +183,7 @@ async def create_scheduled_post(
     if scheduled_at.tzinfo is None:
         raise PostError("scheduled_at must be timezone-aware (use datetime with tzinfo, e.g. UTC)")
 
-    from linkit.endpoints import GRAPHQL, RESHARE_QUERY_ID
+    from linkitin.endpoints import GRAPHQL, RESHARE_QUERY_ID
 
     url = f"{GRAPHQL}?action=execute&queryId={RESHARE_QUERY_ID}"
     visibility_type = "ANYONE" if visibility == "PUBLIC" else "CONNECTIONS_ONLY"
@@ -255,7 +255,7 @@ async def create_scheduled_post_with_media(
     if scheduled_at.tzinfo is None:
         raise PostError("scheduled_at must be timezone-aware (use datetime with tzinfo, e.g. UTC)")
 
-    from linkit.endpoints import GRAPHQL, RESHARE_QUERY_ID
+    from linkitin.endpoints import GRAPHQL, RESHARE_QUERY_ID
 
     url = f"{GRAPHQL}?action=execute&queryId={RESHARE_QUERY_ID}"
     visibility_type = "ANYONE" if visibility == "PUBLIC" else "CONNECTIONS_ONLY"
@@ -333,7 +333,7 @@ async def repost(session: Session, share_urn: str, text: str = "") -> str:
             "Use Post.share_urn from feed results."
         )
 
-    from linkit.endpoints import GRAPHQL, REPOST_QUERY_ID, RESHARE_QUERY_ID
+    from linkitin.endpoints import GRAPHQL, REPOST_QUERY_ID, RESHARE_QUERY_ID
 
     if text:
         # "Repost with your thoughts" — creates a new post with commentary.

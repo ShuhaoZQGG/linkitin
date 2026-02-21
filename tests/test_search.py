@@ -1,15 +1,15 @@
-"""Tests for linkit.search."""
+"""Tests for linkitin.search."""
 from unittest.mock import patch
 
 import pytest
 
-from linkit.search import (
+from linkitin.search import (
     _extract_search_snippet,
     _is_search_post_entity,
     _parse_search_response,
     search_posts,
 )
-from linkit.exceptions import LinkitError
+from linkitin.exceptions import LinkitinError
 from tests.conftest import make_response
 
 
@@ -173,25 +173,25 @@ class TestSearchPosts:
                 }
             ]
         })
-        with patch("linkit.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
+        with patch("linkitin.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
             posts = await search_posts(mock_session, "AI startups", limit=5)
         assert len(posts) == 1
         assert posts[0].text == "Found it"
 
     async def test_429_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=429)
-        with patch("linkit.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
-            with pytest.raises(LinkitError, match="rate limited"):
+        with patch("linkitin.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
+            with pytest.raises(LinkitinError, match="rate limited"):
                 await search_posts(mock_session, "test")
 
     async def test_403_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=403)
-        with patch("linkit.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
-            with pytest.raises(LinkitError, match="forbidden"):
+        with patch("linkitin.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
+            with pytest.raises(LinkitinError, match="forbidden"):
                 await search_posts(mock_session, "test")
 
     async def test_500_raises(self, mock_session):
         mock_session.get.return_value = make_response(status_code=500)
-        with patch("linkit.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
-            with pytest.raises(LinkitError, match="HTTP 500"):
+        with patch("linkitin.chrome_data.extract_search_data", side_effect=Exception("no chrome")):
+            with pytest.raises(LinkitinError, match="HTTP 500"):
                 await search_posts(mock_session, "test")

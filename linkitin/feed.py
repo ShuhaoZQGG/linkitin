@@ -3,10 +3,10 @@ import sys
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from linkit.endpoints import USER_POSTS, FEED_UPDATES
-from linkit.exceptions import AuthError, LinkitError
-from linkit.models import MediaItem, Post, User
-from linkit.session import Session
+from linkitin.endpoints import USER_POSTS, FEED_UPDATES
+from linkitin.exceptions import AuthError, LinkitinError
+from linkitin.models import MediaItem, Post, User
+from linkitin.session import Session
 
 
 async def _chrome_extract(session: Session, source: str, **kwargs) -> Optional[dict]:
@@ -26,10 +26,10 @@ async def _chrome_extract(session: Session, source: str, **kwargs) -> Optional[d
 
     Raises:
         AuthError: If the LinkedIn session expired.
-        LinkitError: If Chrome extraction failed for a non-availability reason.
+        LinkitinError: If Chrome extraction failed for a non-availability reason.
     """
     try:
-        from linkit.chrome_data import extract_feed_data, extract_my_posts_data
+        from linkitin.chrome_data import extract_feed_data, extract_my_posts_data
 
         loop = asyncio.get_event_loop()
         if source == "feed":
@@ -46,7 +46,7 @@ async def _chrome_extract(session: Session, source: str, **kwargs) -> Optional[d
         if session.use_chrome_proxy:
             raise
         # Log the error so it's visible, but try REST as fallback.
-        print(f"[linkit] Chrome extraction failed ({e}), trying REST API...",
+        print(f"[linkitin] Chrome extraction failed ({e}), trying REST API...",
               file=sys.stderr)
         return None
 
@@ -78,11 +78,11 @@ async def get_my_posts(session: Session, limit: int = 20) -> list[Post]:
 
     response = await session.get(USER_POSTS, params=params)
     if response.status_code == 429:
-        raise LinkitError("rate limited by LinkedIn - try again later")
+        raise LinkitinError("rate limited by LinkedIn - try again later")
     if response.status_code == 403:
-        raise LinkitError("forbidden - cookies may be expired, re-login required")
+        raise LinkitinError("forbidden - cookies may be expired, re-login required")
     if response.status_code != 200:
-        raise LinkitError(f"failed to fetch posts: HTTP {response.status_code}")
+        raise LinkitinError(f"failed to fetch posts: HTTP {response.status_code}")
 
     data = response.json()
     return _parse_feed_response(data, limit)
@@ -113,11 +113,11 @@ async def get_feed(session: Session, limit: int = 20) -> list[Post]:
 
     response = await session.get(FEED_UPDATES, params=params)
     if response.status_code == 429:
-        raise LinkitError("rate limited by LinkedIn - try again later")
+        raise LinkitinError("rate limited by LinkedIn - try again later")
     if response.status_code == 403:
-        raise LinkitError("forbidden - cookies may be expired, re-login required")
+        raise LinkitinError("forbidden - cookies may be expired, re-login required")
     if response.status_code != 200:
-        raise LinkitError(f"failed to fetch feed: HTTP {response.status_code}")
+        raise LinkitinError(f"failed to fetch feed: HTTP {response.status_code}")
 
     data = response.json()
     return _parse_feed_response(data, limit)
@@ -145,7 +145,7 @@ async def get_trending_posts(
         List of Post objects sorted by engagement (highest first).
     """
     try:
-        from linkit.chrome_data import extract_trending_data
+        from linkitin.chrome_data import extract_trending_data
 
         loop = asyncio.get_event_loop()
         data = await loop.run_in_executor(
@@ -153,7 +153,7 @@ async def get_trending_posts(
         )
         return _parse_feed_response(data, limit)
     except (ImportError, FileNotFoundError):
-        raise LinkitError("trending posts require Chrome proxy mode")
+        raise LinkitinError("trending posts require Chrome proxy mode")
 
 
 def _parse_feed_response(data: dict[str, Any], limit: int) -> list[Post]:

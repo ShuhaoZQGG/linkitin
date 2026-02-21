@@ -9,8 +9,8 @@ import json
 import time
 from urllib.parse import quote
 
-from linkit.chrome_proxy import _find_linkedin_tab_and_exec
-from linkit.exceptions import LinkitError
+from linkitin.chrome_proxy import _find_linkedin_tab_and_exec
+from linkitin.exceptions import LinkitinError
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +43,7 @@ def _extract_page_entities() -> list[dict]:
         result = json.loads(raw)
         return result.get("d", [])
     except json.JSONDecodeError:
-        raise LinkitError(f"failed to parse Chrome page data: {raw[:200]}")
+        raise LinkitinError(f"failed to parse Chrome page data: {raw[:200]}")
 
 
 def _wait_for_navigation(old_url: str, max_wait: float = 10.0) -> None:
@@ -91,7 +91,7 @@ def _navigate_to(path: str) -> None:
     """Navigate Chrome's LinkedIn tab to a path and wait for page load.
 
     Raises:
-        LinkitError: If the page redirected to the login page (session expired).
+        LinkitinError: If the page redirected to the login page (session expired).
     """
     old_url = _get_current_url()
     url = f"https://www.linkedin.com{path}"
@@ -104,7 +104,7 @@ def _navigate_to(path: str) -> None:
     # Detect login redirect (session expired).
     current = _get_current_url()
     if "/uas/login" in current or "/checkpoint" in current:
-        from linkit.exceptions import AuthError
+        from linkitin.exceptions import AuthError
         raise AuthError(
             "LinkedIn session expired — log into linkedin.com in Chrome and retry"
         )
@@ -120,7 +120,7 @@ def _navigate_and_extract_entities(path: str) -> dict:
     _wait_for_page_data(max_wait=10.0)
     entities = _extract_page_entities()
     if not entities:
-        raise LinkitError(f"no entity data found after navigating to {path}")
+        raise LinkitinError(f"no entity data found after navigating to {path}")
     return {"included": entities}
 
 
@@ -132,7 +132,7 @@ def extract_feed_data() -> dict:
     """
     current = _get_current_url()
     if "/uas/login" in current or "/checkpoint" in current:
-        from linkit.exceptions import AuthError
+        from linkitin.exceptions import AuthError
         raise AuthError(
             "LinkedIn session expired — log into linkedin.com in Chrome and retry"
         )
@@ -247,7 +247,7 @@ def _extract_posts_from_dom() -> list[dict]:
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
-        raise LinkitError(f"failed to parse DOM extraction result: {raw[:200]}")
+        raise LinkitinError(f"failed to parse DOM extraction result: {raw[:200]}")
 
     results = data.get("results", [])
 
@@ -297,7 +297,7 @@ def extract_search_data(keywords: str) -> dict:
     time.sleep(2.0)
     entities = _extract_posts_from_dom()
     if not entities:
-        raise LinkitError(
+        raise LinkitinError(
             "no search results found — the page may not have loaded fully"
         )
     return {"included": entities}
@@ -393,7 +393,7 @@ def extract_trending_data(
     # Scroll to collect more results, then rank by engagement.
     results = _scroll_and_collect(scrolls=scrolls)
     if not results:
-        raise LinkitError("no trending posts found")
+        raise LinkitinError("no trending posts found")
 
     # Sort by total engagement descending.
     results.sort(
@@ -495,7 +495,7 @@ def _extract_activity_posts_from_dom() -> list[dict]:
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
-        raise LinkitError(f"failed to parse activity page data: {raw[:200]}")
+        raise LinkitinError(f"failed to parse activity page data: {raw[:200]}")
 
     entities = []
     for r in data.get("results", []):

@@ -8,7 +8,7 @@ includes all cookies.
 import json
 import subprocess
 
-from linkit.exceptions import AuthError, LinkitError
+from linkitin.exceptions import AuthError, LinkitinError
 
 
 def _find_linkedin_tab_and_exec(js_code: str) -> str:
@@ -48,7 +48,7 @@ end tell
             capture_output=True, text=True, timeout=30,
         )
     except subprocess.TimeoutExpired:
-        raise LinkitError("AppleScript timed out")
+        raise LinkitinError("AppleScript timed out")
     except FileNotFoundError:
         raise AuthError("osascript not found - this feature requires macOS")
 
@@ -59,7 +59,7 @@ end tell
                 "Chrome AppleScript is disabled. Enable it via: "
                 "View > Developer > Allow JavaScript from Apple Events"
             )
-        raise LinkitError(f"AppleScript error: {stderr}")
+        raise LinkitinError(f"AppleScript error: {stderr}")
 
     output = result.stdout.strip()
     if output == "___NO_LINKEDIN_TAB___":
@@ -142,7 +142,7 @@ def chrome_voyager_request(method: str, path: str, params: dict | None = None,
     try:
         result = json.loads(raw)
     except json.JSONDecodeError:
-        raise LinkitError(f"invalid response from Chrome: {raw[:200]}")
+        raise LinkitinError(f"invalid response from Chrome: {raw[:200]}")
 
     status = result.get("status", 0)
     body_text = result.get("body", "")
@@ -153,7 +153,7 @@ def chrome_voyager_request(method: str, path: str, params: dict | None = None,
     if status == 401:
         raise AuthError("unauthorized - log into LinkedIn in Chrome")
     if status == 429:
-        raise LinkitError("rate limited by LinkedIn - try again later")
+        raise LinkitinError("rate limited by LinkedIn - try again later")
 
     # Always attach the real HTTP status so callers can forward it.
     resp_headers["_xcr_status"] = str(status)
@@ -164,14 +164,14 @@ def chrome_voyager_request(method: str, path: str, params: dict | None = None,
     try:
         return json.loads(body_text), resp_headers
     except json.JSONDecodeError:
-        raise LinkitError(f"non-JSON response (status {status}): {body_text[:200]}")
+        raise LinkitinError(f"non-JSON response (status {status}): {body_text[:200]}")
 
 
 def chrome_validate_session() -> bool:
     """Check if Chrome has a valid LinkedIn session.
 
     Raises:
-        LinkitError: If AppleScript is unavailable or Chrome automation is not
+        LinkitinError: If AppleScript is unavailable or Chrome automation is not
             authorized (macOS Automation permission not granted).
     """
     try:
@@ -180,5 +180,5 @@ def chrome_validate_session() -> bool:
     except AuthError:
         # AuthError means Chrome is reachable but LinkedIn is not logged in.
         return False
-    # LinkitError (AppleScript failures, permission denied, timeouts) is not
+    # LinkitinError (AppleScript failures, permission denied, timeouts) is not
     # caught here — it propagates so callers see the actionable message.

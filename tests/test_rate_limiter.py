@@ -1,11 +1,11 @@
-"""Unit tests for linkit.rate_limiter."""
+"""Unit tests for linkitin.rate_limiter."""
 import asyncio
 import time
 from unittest.mock import patch, AsyncMock
 
 import pytest
 
-from linkit.rate_limiter import RateLimiter
+from linkitin.rate_limiter import RateLimiter
 
 
 @pytest.fixture

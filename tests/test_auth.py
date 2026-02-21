@@ -1,11 +1,11 @@
-"""Tests for linkit.auth."""
+"""Tests for linkitin.auth."""
 from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 
-from linkit.auth import extract_cookies_from_browser, login_with_cookies, validate_session
-from linkit.exceptions import AuthError
-from linkit.session import Session
+from linkitin.auth import extract_cookies_from_browser, login_with_cookies, validate_session
+from linkitin.exceptions import AuthError
+from linkitin.session import Session
 
 
 @pytest.fixture
@@ -16,12 +16,12 @@ def session(tmp_path):
 
 class TestExtractCookiesFromBrowser:
     async def test_success_sets_chrome_proxy(self, session):
-        with patch("linkit.chrome_proxy.chrome_validate_session", return_value=True):
+        with patch("linkitin.chrome_proxy.chrome_validate_session", return_value=True):
             await extract_cookies_from_browser(session)
         assert session.use_chrome_proxy is True
 
     async def test_raises_when_no_session(self, session):
-        with patch("linkit.chrome_proxy.chrome_validate_session", return_value=False):
+        with patch("linkitin.chrome_proxy.chrome_validate_session", return_value=False):
             with pytest.raises(AuthError, match="no valid LinkedIn session"):
                 await extract_cookies_from_browser(session)
 
@@ -36,12 +36,12 @@ class TestLoginWithCookies:
 class TestValidateSession:
     async def test_chrome_proxy_delegates(self, session):
         session.use_chrome_proxy = True
-        with patch("linkit.chrome_proxy.chrome_validate_session", return_value=True):
+        with patch("linkitin.chrome_proxy.chrome_validate_session", return_value=True):
             assert await validate_session(session) is True
 
     async def test_chrome_proxy_returns_false(self, session):
         session.use_chrome_proxy = True
-        with patch("linkit.chrome_proxy.chrome_validate_session", return_value=False):
+        with patch("linkitin.chrome_proxy.chrome_validate_session", return_value=False):
             assert await validate_session(session) is False
 
     async def test_rest_success(self, session):

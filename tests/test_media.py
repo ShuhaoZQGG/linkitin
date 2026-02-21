@@ -1,13 +1,13 @@
-"""Tests for linkit.media."""
+"""Tests for linkitin.media."""
 import pytest
 
-from linkit.media import (
+from linkitin.media import (
     _extract_media_urn,
     _extract_upload_url,
     _guess_content_type,
     upload_image,
 )
-from linkit.exceptions import MediaError, RateLimitError
+from linkitin.exceptions import MediaError, RateLimitError
 from tests.conftest import make_response
 
 

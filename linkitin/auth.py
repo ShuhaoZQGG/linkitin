@@ -1,7 +1,7 @@
 import sys
 
-from linkit.exceptions import AuthError
-from linkit.session import Session
+from linkitin.exceptions import AuthError
+from linkitin.session import Session
 
 
 async def extract_cookies_from_browser(session: Session) -> None:
@@ -14,7 +14,7 @@ async def extract_cookies_from_browser(session: Session) -> None:
     Raises:
         AuthError: If no valid LinkedIn tab is found in Chrome.
     """
-    from linkit.chrome_proxy import chrome_validate_session
+    from linkitin.chrome_proxy import chrome_validate_session
 
     if not chrome_validate_session():
         raise AuthError(
@@ -32,11 +32,11 @@ async def login_with_cookies(session: Session, li_at: str, jsessionid: str) -> N
 async def validate_session(session: Session) -> bool:
     """Validate the current session by making a test request."""
     if session.use_chrome_proxy:
-        from linkit.chrome_proxy import chrome_validate_session
+        from linkitin.chrome_proxy import chrome_validate_session
         return chrome_validate_session()
 
     try:
-        from linkit.endpoints import ME
+        from linkitin.endpoints import ME
         response = await session.get(ME)
         return response.status_code == 200
     except Exception:

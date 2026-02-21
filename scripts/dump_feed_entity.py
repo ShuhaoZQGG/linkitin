@@ -8,7 +8,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from linkit.chrome_data import _find_linkedin_tab_and_exec, _wait_for_page_data
+from linkitin.chrome_data import _find_linkedin_tab_and_exec, _wait_for_page_data
 
 
 def main():

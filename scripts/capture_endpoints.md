@@ -1,7 +1,7 @@
 # Capturing LinkedIn Voyager API Endpoints
 
 This guide explains how to capture the exact request format used by LinkedIn's
-internal Voyager API, which is needed to verify and update the linkit library.
+internal Voyager API, which is needed to verify and update the linkitin library.
 
 ## Setup
 

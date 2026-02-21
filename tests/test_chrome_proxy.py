@@ -1,16 +1,16 @@
-"""Tests for linkit.chrome_proxy."""
+"""Tests for linkitin.chrome_proxy."""
 import json
 import subprocess
 from unittest.mock import patch, MagicMock
 
 import pytest
 
-from linkit.chrome_proxy import (
+from linkitin.chrome_proxy import (
     _find_linkedin_tab_and_exec,
     chrome_voyager_request,
     chrome_validate_session,
 )
-from linkit.exceptions import AuthError, LinkitError
+from linkitin.exceptions import AuthError, LinkitinError
 
 
 class TestFindLinkedinTabAndExec:
@@ -34,12 +34,12 @@ class TestFindLinkedinTabAndExec:
     def test_applescript_other_error(self):
         result = MagicMock(returncode=1, stdout="", stderr="some other error")
         with patch("subprocess.run", return_value=result):
-            with pytest.raises(LinkitError, match="AppleScript error"):
+            with pytest.raises(LinkitinError, match="AppleScript error"):
                 _find_linkedin_tab_and_exec("1")
 
     def test_timeout(self):
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("osascript", 30)):
-            with pytest.raises(LinkitError, match="timed out"):
+            with pytest.raises(LinkitinError, match="timed out"):
                 _find_linkedin_tab_and_exec("1")
 
     def test_osascript_not_found(self):
@@ -53,7 +53,7 @@ class TestChromeVoyagerRequest:
         hdrs = headers or {}
         payload = json.dumps({"status": status, "body": body, "headers": hdrs})
         return patch(
-            "linkit.chrome_proxy._find_linkedin_tab_and_exec",
+            "linkitin.chrome_proxy._find_linkedin_tab_and_exec",
             return_value=payload,
         )
 
@@ -94,41 +94,41 @@ class TestChromeVoyagerRequest:
 
     def test_rate_limited(self):
         with self._mock_exec(status=429, body=""):
-            with pytest.raises(LinkitError, match="rate limited"):
+            with pytest.raises(LinkitinError, match="rate limited"):
                 chrome_voyager_request("GET", "/api/me")
 
     def test_invalid_json_response(self):
-        with patch("linkit.chrome_proxy._find_linkedin_tab_and_exec", return_value="not json"):
-            with pytest.raises(LinkitError, match="invalid response"):
+        with patch("linkitin.chrome_proxy._find_linkedin_tab_and_exec", return_value="not json"):
+            with pytest.raises(LinkitinError, match="invalid response"):
                 chrome_voyager_request("GET", "/api/me")
 
     def test_non_json_body(self):
         payload = json.dumps({"status": 200, "body": "plain text", "headers": {}})
-        with patch("linkit.chrome_proxy._find_linkedin_tab_and_exec", return_value=payload):
-            with pytest.raises(LinkitError, match="non-JSON response"):
+        with patch("linkitin.chrome_proxy._find_linkedin_tab_and_exec", return_value=payload):
+            with pytest.raises(LinkitinError, match="non-JSON response"):
                 chrome_voyager_request("GET", "/api/me")
 
 
 class TestChromeValidateSession:
     def test_valid_session(self):
         data = {"data": {"plainId": "12345"}}
-        with patch("linkit.chrome_proxy.chrome_voyager_request", return_value=(data, {})):
+        with patch("linkitin.chrome_proxy.chrome_voyager_request", return_value=(data, {})):
             assert chrome_validate_session() is True
 
     def test_invalid_session_no_plain_id(self):
         data = {"data": {"plainId": None}}
-        with patch("linkit.chrome_proxy.chrome_voyager_request", return_value=(data, {})):
+        with patch("linkitin.chrome_proxy.chrome_voyager_request", return_value=(data, {})):
             assert chrome_validate_session() is False
 
     def test_invalid_session_no_data_key(self):
-        with patch("linkit.chrome_proxy.chrome_voyager_request", return_value=({}, {})):
+        with patch("linkitin.chrome_proxy.chrome_voyager_request", return_value=({}, {})):
             assert chrome_validate_session() is False
 
     def test_auth_error_returns_false(self):
-        with patch("linkit.chrome_proxy.chrome_voyager_request", side_effect=AuthError("no tab")):
+        with patch("linkitin.chrome_proxy.chrome_voyager_request", side_effect=AuthError("no tab")):
             assert chrome_validate_session() is False
 
-    def test_linkit_error_propagates(self):
-        with patch("linkit.chrome_proxy.chrome_voyager_request", side_effect=LinkitError("fail")):
-            with pytest.raises(LinkitError):
+    def test_linkitin_error_propagates(self):
+        with patch("linkitin.chrome_proxy.chrome_voyager_request", side_effect=LinkitinError("fail")):
+            with pytest.raises(LinkitinError):
                 chrome_validate_session()
