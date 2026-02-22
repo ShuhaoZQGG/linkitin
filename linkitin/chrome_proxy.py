@@ -70,8 +70,21 @@ end tell
     return output
 
 
+def _build_extra_header_js(extra_headers: dict | None) -> str:
+    """Build xhr.setRequestHeader() calls for extra headers."""
+    if not extra_headers:
+        return ""
+    lines = []
+    for key, value in extra_headers.items():
+        # Escape single quotes in values for JS string safety.
+        safe_val = str(value).replace("\\", "\\\\").replace("'", "\\'")
+        lines.append(f"\n            xhr.setRequestHeader('{key}', '{safe_val}');")
+    return "".join(lines)
+
+
 def chrome_voyager_request(method: str, path: str, params: dict | None = None,
-                           json_data: dict | None = None) -> tuple[dict, dict]:
+                           json_data: dict | None = None,
+                           extra_headers: dict | None = None) -> tuple[dict, dict]:
     """Make a Voyager API request through Chrome.
 
     Args:
@@ -132,7 +145,7 @@ def chrome_voyager_request(method: str, path: str, params: dict | None = None,
             xhr.setRequestHeader('Accept', 'application/vnd.linkedin.normalized+json+2.1');
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.setRequestHeader('csrf-token', jsid);
-            xhr.setRequestHeader('x-restli-protocol-version', '2.0.0');
+            xhr.setRequestHeader('x-restli-protocol-version', '2.0.0');{_build_extra_header_js(extra_headers)}
             xhr.send('{body_for_js}');{parse_headers_js}
             JSON.stringify({{status: xhr.status, body: xhr.responseText, headers: hdrs}});
         """

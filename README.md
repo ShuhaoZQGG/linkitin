@@ -89,8 +89,16 @@ async def main():
             scheduled_at=datetime.now(timezone.utc) + timedelta(hours=2),
         )
 
-        # Repost a post from the feed
+        # Comment on a post
         feed = await client.get_feed(limit=5)
+        comment_urn = await client.comment_post(feed[0].urn, "Great post!")
+
+        # Reply to a comment (threaded)
+        reply_urn = await client.comment_post(
+            feed[0].urn, "Thanks!", parent_comment_urn=comment_urn
+        )
+
+        # Repost a post from the feed
         repost_urn = await client.repost(feed[0].share_urn)
 
         # Repost with your thoughts
@@ -134,6 +142,7 @@ All requests go through a token-bucket rate limiter: **10 requests per minute** 
 | `create_post_with_image(text, image_data, filename, visibility="PUBLIC")` | Create post with image |
 | `create_scheduled_post(text, scheduled_at, visibility="PUBLIC")` | Schedule a text post; `scheduled_at` rounded to next 15-min slot |
 | `create_scheduled_post_with_image(text, image_data, filename, scheduled_at, visibility="PUBLIC")` | Schedule a post with image; `scheduled_at` rounded to next 15-min slot |
+| `comment_post(post_urn, text, parent_comment_urn="")` | Comment on a post (or reply to a comment) |
 | `repost(share_urn, text="")` | Repost (reshare) an existing post |
 | `delete_post(post_urn)` | Delete a post by URN |
 | `close()` | Close the HTTP session |

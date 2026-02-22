@@ -393,6 +393,38 @@ repost_urn = await client.repost(post.share_urn)
 repost_urn = await client.repost(post.share_urn, text="Great insights!")
 ```
 
+#### `comment_post()`
+
+```python
+async def comment_post(post_urn: str, text: str, parent_comment_urn: str = "") -> str
+```
+
+Comment on a LinkedIn post. Pass `parent_comment_urn` to create a threaded reply.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `post_urn` | `str` | — | The URN of the post to comment on. Accepts `urn:li:activity:*`, `urn:li:ugcPost:*`, or `urn:li:fsd_update:*` formats. |
+| `text` | `str` | — | The comment text. |
+| `parent_comment_urn` | `str` | `""` | Optional parent comment URN for threaded replies. |
+
+**Returns:** `str` — the URN of the created comment.
+
+**Raises:** `PostError`, `RateLimitError`
+
+```python
+feed = await client.get_feed(limit=5)
+
+# Top-level comment
+comment_urn = await client.comment_post(feed[0].urn, "Great post!")
+
+# Threaded reply
+reply_urn = await client.comment_post(
+    feed[0].urn, "Thanks!", parent_comment_urn=comment_urn
+)
+```
+
+---
+
 #### `delete_post()`
 
 ```python

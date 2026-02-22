@@ -17,6 +17,7 @@ Commands:
     {"action": "create_post_with_image", "text": "...", "image_data": "<base64>", "filename": "image.png"}
     {"action": "delete_post", "urn": "urn:li:share:..."}
     {"action": "repost", "share_urn": "urn:li:share:...", "text": ""}
+    {"action": "comment_post", "post_urn": "urn:li:activity:...", "text": "Great post!"}
     {"action": "get_trending_posts", "topic": "AI", "limit": 10}
 """
 import json
@@ -174,6 +175,17 @@ async def handle_command(client, cmd):
         text = cmd.get("text", "")
         new_urn = await client.repost(share_urn=share_urn, text=text)
         return {"urn": new_urn}
+
+    elif action == "comment_post":
+        post_urn = cmd.get("post_urn", "")
+        text = cmd.get("text", "")
+        if not post_urn or not text:
+            return {"error": "comment_post requires post_urn and text"}
+        parent_comment_urn = cmd.get("parent_comment_urn", "")
+        comment_urn = await client.comment_post(
+            post_urn=post_urn, text=text, parent_comment_urn=parent_comment_urn,
+        )
+        return {"comment_urn": comment_urn}
 
     elif action == "get_trending_posts":
         topic = cmd.get("topic", "")

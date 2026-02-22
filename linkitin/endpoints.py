@@ -3,6 +3,8 @@ VOYAGER_BASE = f"{BASE_URL}/voyager/api"
 
 # Posts
 CREATE_POST = f"{VOYAGER_BASE}/contentcreation/normShares"
+COMMENT_POST = f"{VOYAGER_BASE}/voyagerSocialDashNormComments"
+COMMENT_SIGNAL_QUERY_ID = "inSessionRelevanceVoyagerFeedDashClientSignal.c1c9c08097afa4e02954945e9df54091"
 USER_POSTS = f"{VOYAGER_BASE}/identity/profileUpdatesV2"
 
 # Feed

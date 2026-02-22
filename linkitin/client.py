@@ -187,6 +187,25 @@ class LinkitinClient:
         from linkitin.poster import repost
         return await repost(self.session, share_urn=share_urn, text=text)
 
+    async def comment_post(
+        self, post_urn: str, text: str, parent_comment_urn: str = ""
+    ) -> str:
+        """Comment on a LinkedIn post.
+
+        Args:
+            post_urn: The URN of the post to comment on.
+            text: The comment text.
+            parent_comment_urn: Optional parent comment URN for threaded replies.
+
+        Returns:
+            The URN of the created comment.
+        """
+        from linkitin.poster import comment_post
+        return await comment_post(
+            self.session, post_urn=post_urn, text=text,
+            parent_comment_urn=parent_comment_urn,
+        )
+
     async def upload_image(self, image_data: bytes, filename: str) -> str:
         """Upload an image for use in a post.
 

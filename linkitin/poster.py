@@ -1,7 +1,9 @@
+import base64
 import math
+import os
 from datetime import datetime, timezone
 
-from linkitin.endpoints import CREATE_POST
+from linkitin.endpoints import COMMENT_POST, COMMENT_SIGNAL_QUERY_ID, CREATE_POST
 from linkitin.exceptions import PostError, RateLimitError
 from linkitin.session import Session
 
@@ -403,6 +405,119 @@ async def repost(session: Session, share_urn: str, text: str = "") -> str:
 
     if not urn:
         raise PostError("repost created but no URN returned in response")
+
+    return urn
+
+
+def _build_thread_urn(post_urn: str) -> str:
+    """Extract the raw activity/ugcPost URN for the comment API's ``threadUrn`` field.
+
+    Feed results return ``fsd_update`` URNs that wrap the real activity URN,
+    but the comment API expects the raw ``urn:li:activity:*`` or
+    ``urn:li:ugcPost:*`` URN.
+    """
+    if post_urn.startswith("urn:li:fsd_update:"):
+        # urn:li:fsd_update:(urn:li:activity:123,FEED_DETAIL,...) -> urn:li:activity:123
+        inner = post_urn.split("(", 1)[-1].rsplit(")", 1)[0]
+        return inner.split(",")[0]
+    return post_urn
+
+
+def _extract_comment_urn(data: dict, response) -> str:
+    """Extract the comment URN from a create-comment response.
+
+    Handles both direct and normalized JSON formats.
+    """
+    inner = data.get("data", {}) if isinstance(data.get("data"), dict) else {}
+
+    for src in (data, inner, data.get("value", {})):
+        urn = src.get("urn", "") or src.get("entityUrn", "")
+        if urn:
+            return urn
+
+    urn = response.headers.get("x-restli-id", "")
+    if urn:
+        return urn
+
+    return ""
+
+
+async def comment_post(
+    session: Session, post_urn: str, text: str, parent_comment_urn: str = ""
+) -> str:
+    """Comment on a LinkedIn post.
+
+    Args:
+        session: An authenticated Session.
+        post_urn: The URN of the post to comment on.
+        text: The comment text.
+        parent_comment_urn: Optional parent comment URN for threaded replies.
+
+    Returns:
+        The URN of the created comment.
+
+    Raises:
+        PostError: If the comment creation fails.
+        RateLimitError: If rate limited by LinkedIn.
+    """
+    if not text:
+        raise PostError("comment text cannot be empty")
+    if not post_urn:
+        raise PostError("post_urn cannot be empty")
+
+    from linkitin.endpoints import GRAPHQL
+
+    thread_urn = _build_thread_urn(post_urn)
+
+    # Extra headers required by LinkedIn's comment endpoint.
+    page_suffix = base64.b64encode(os.urandom(16)).decode("ascii").rstrip("=")
+    extra_headers = {
+        "x-li-lang": "en_US",
+        "x-li-deco-include-micro-schema": "true",
+        "x-li-pem-metadata": "Voyager - Feed - Comments=create-a-comment",
+        "x-li-page-instance": f"urn:li:page:d_flagship3_feed;{page_suffix}",
+        "x-li-track": session._li_track,
+    }
+
+    # LinkedIn requires a submit-comment signal before the actual comment POST.
+    signal_url = f"{GRAPHQL}?action=execute&queryId={COMMENT_SIGNAL_QUERY_ID}"
+    signal_payload = {
+        "variables": {
+            "backendUpdateUrn": thread_urn,
+            "actionType": "submitComment",
+        },
+        "queryId": COMMENT_SIGNAL_QUERY_ID,
+        "includeWebMetadata": True,
+    }
+    await session.post(signal_url, json_data=signal_payload, extra_headers=extra_headers)
+
+    url = f"{COMMENT_POST}?decorationId=com.linkedin.voyager.dash.deco.social.NormComment-43"
+
+    payload = {
+        "commentary": {
+            "text": text,
+            "attributesV2": [],
+            "$type": "com.linkedin.voyager.dash.common.text.TextViewModel",
+        },
+        "threadUrn": thread_urn,
+    }
+
+    if parent_comment_urn:
+        payload["parentComment"] = parent_comment_urn
+
+    response = await session.post(url, json_data=payload, extra_headers=extra_headers)
+
+    if response.status_code == 429:
+        raise RateLimitError("rate limited by LinkedIn - try again later")
+    if response.status_code == 403:
+        raise PostError("forbidden - cookies may be expired, re-login required")
+    if response.status_code not in (200, 201):
+        raise PostError(f"failed to comment on post: HTTP {response.status_code} - {response.text}")
+
+    data = response.json()
+    urn = _extract_comment_urn(data, response)
+    if not urn:
+        raise PostError("comment created but no URN returned in response")
 
     return urn
 

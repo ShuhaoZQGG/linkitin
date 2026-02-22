@@ -133,20 +133,25 @@ class Session:
         response = await client.get(url, params=params, headers=headers, cookies=cookies)
         return response
 
-    async def post(self, url: str, json_data: Optional[dict] = None) -> httpx.Response:
+    async def post(self, url: str, json_data: Optional[dict] = None,
+                   extra_headers: Optional[dict] = None) -> httpx.Response:
         """Perform a rate-limited POST request with authentication headers."""
         if self.use_chrome_proxy:
-            return await self._chrome_proxy_request("POST", url, json_data=json_data)
+            return await self._chrome_proxy_request("POST", url, json_data=json_data,
+                                                    extra_headers=extra_headers)
         await self.rate_limiter.acquire()
         client = await self._ensure_client()
         headers = {"csrf-token": self._get_csrf_token()}
+        if extra_headers:
+            headers.update(extra_headers)
         cookies = self._build_cookies()
         response = await client.post(url, json=json_data, headers=headers, cookies=cookies)
         return response
 
     async def _chrome_proxy_request(self, method: str, url: str,
                                      params: Optional[dict] = None,
-                                     json_data: Optional[dict] = None) -> httpx.Response:
+                                     json_data: Optional[dict] = None,
+                                     extra_headers: Optional[dict] = None) -> httpx.Response:
         """Route a request through Chrome via AppleScript."""
         import asyncio
         from linkitin.chrome_proxy import chrome_voyager_request
@@ -158,7 +163,9 @@ class Session:
         # Run the blocking AppleScript call in a thread pool.
         loop = asyncio.get_event_loop()
         data, resp_headers = await loop.run_in_executor(
-            None, lambda: chrome_voyager_request(method, path, params=params, json_data=json_data)
+            None, lambda: chrome_voyager_request(method, path, params=params,
+                                                 json_data=json_data,
+                                                 extra_headers=extra_headers)
         )
 
         # Wrap the result in an httpx.Response-like object, forwarding
