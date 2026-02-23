@@ -276,13 +276,12 @@ async def create_scheduled_post_with_media(
                 "visibilityDataUnion": {
                     "visibilityType": visibility_type,
                 },
-                "mediaCategory": "IMAGE",
-                "media": [
-                    {
-                        "category": "IMAGE",
-                        "mediaUrn": media_urn,
-                    }
-                ],
+                "media": {
+                    "category": "IMAGE",
+                    "mediaUrn": media_urn,
+                    "tapTargets": [],
+                    "altText": "",
+                },
             },
         },
         "queryId": RESHARE_QUERY_ID,
@@ -303,7 +302,11 @@ async def create_scheduled_post_with_media(
     if not urn:
         urn = _extract_post_urn(data, response)
     if not urn:
-        raise PostError("scheduled post with media created but no URN returned in response")
+        import json as _json
+        raise PostError(
+            f"scheduled post with media created but no URN returned in response; "
+            f"raw body: {_json.dumps(data)[:2000]}"
+        )
 
     return urn
 
