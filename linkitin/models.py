@@ -28,3 +28,4 @@ class Post(BaseModel):
     media: list[MediaItem] = []
     created_at: Optional[datetime] = None
     share_urn: Optional[str] = None
+    thread_urn: Optional[str] = None

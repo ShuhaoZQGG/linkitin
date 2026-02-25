@@ -188,7 +188,8 @@ class LinkitinClient:
         return await repost(self.session, share_urn=share_urn, text=text)
 
     async def comment_post(
-        self, post_urn: str, text: str, parent_comment_urn: str = ""
+        self, post_urn: str, text: str, parent_comment_urn: str = "",
+        thread_urn: str = "",
     ) -> str:
         """Comment on a LinkedIn post.
 
@@ -196,6 +197,7 @@ class LinkitinClient:
             post_urn: The URN of the post to comment on.
             text: The comment text.
             parent_comment_urn: Optional parent comment URN for threaded replies.
+            thread_urn: Optional ugcPost URN for the comment API's threadUrn field.
 
         Returns:
             The URN of the created comment.
@@ -204,6 +206,7 @@ class LinkitinClient:
         return await comment_post(
             self.session, post_urn=post_urn, text=text,
             parent_comment_urn=parent_comment_urn,
+            thread_urn=thread_urn,
         )
 
     async def upload_image(self, image_data: bytes, filename: str) -> str:

@@ -446,7 +446,8 @@ def _extract_comment_urn(data: dict, response) -> str:
 
 
 async def comment_post(
-    session: Session, post_urn: str, text: str, parent_comment_urn: str = ""
+    session: Session, post_urn: str, text: str, parent_comment_urn: str = "",
+    thread_urn: str = "",
 ) -> str:
     """Comment on a LinkedIn post.
 
@@ -455,6 +456,9 @@ async def comment_post(
         post_urn: The URN of the post to comment on.
         text: The comment text.
         parent_comment_urn: Optional parent comment URN for threaded replies.
+        thread_urn: Optional ugcPost URN (``urn:li:ugcPost:XXX``) for the
+            comment API's ``threadUrn`` field.  When provided, this is used
+            directly instead of deriving it from *post_urn*.
 
     Returns:
         The URN of the created comment.
@@ -470,7 +474,8 @@ async def comment_post(
 
     from linkitin.endpoints import GRAPHQL
 
-    thread_urn = _build_thread_urn(post_urn)
+    if not thread_urn:
+        thread_urn = _build_thread_urn(post_urn)
 
     # Extra headers required by LinkedIn's comment endpoint.
     page_suffix = base64.b64encode(os.urandom(16)).decode("ascii").rstrip("=")

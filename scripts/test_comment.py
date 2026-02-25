@@ -36,6 +36,7 @@ async def main():
             author = f"{post.author.first_name} {post.author.last_name}" if post.author else "?"
             print(f"Found post by {author}  |  {post.likes} likes  {post.comments} comments")
             print(f"URN: {post.urn}")
+            print(f"Thread URN: {post.thread_urn or '(none)'}")
             print(post.text[:200])
         except Exception as e:
             print(f"Error fetching feed: {e}")
@@ -46,7 +47,10 @@ async def main():
         print("\n=== Posting Comment ===")
         comment_urn = None
         try:
-            comment_urn = await client.comment_post(post.urn, "Great post! (linkitin smoke test)")
+            comment_urn = await client.comment_post(
+                post.urn, "Great post! (linkitin smoke test)",
+                thread_urn=post.thread_urn or "",
+            )
             print(f"Comment created: {comment_urn}")
         except Exception as e:
             print(f"Error commenting: {e}")
@@ -60,6 +64,7 @@ async def main():
                 post.urn,
                 "Replying to my own comment (linkitin smoke test)",
                 parent_comment_urn=comment_urn,
+                thread_urn=post.thread_urn or "",
             )
             print(f"Reply created: {reply_urn}")
         except Exception as e:

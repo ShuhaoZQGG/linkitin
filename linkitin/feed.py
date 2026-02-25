@@ -169,6 +169,7 @@ def _parse_feed_response(data: dict[str, Any], limit: int) -> list[Post]:
     social_counts: dict[str, dict] = {}  # activity/ugcPost URN -> counts entity
     social_details: dict[str, dict] = {}
     activities: dict[str, dict] = {}
+    thread_urn_map: dict[str, str] = {}  # activity_urn -> ugcPost_urn
 
     for entity in included:
         entity_type = entity.get("$type", "")
@@ -186,6 +187,16 @@ def _parse_feed_response(data: dict[str, Any], limit: int) -> list[Post]:
         elif "SocialDetail" in entity_type:
             thread_id = entity.get("threadId", "") or entity_urn
             social_details[thread_id] = entity
+            # Map activity URN -> ugcPost URN for comment API.
+            # SocialDetail entityUrn is a compound like:
+            #   urn:li:fsd_socialDetail:(urn:li:ugcPost:X,urn:li:activity:Y,...)
+            # threadUrn holds the raw ugcPost URN needed by the comment API.
+            ugc_urn = entity.get("threadUrn", "")
+            if ugc_urn and ugc_urn.startswith("urn:li:ugcPost:"):
+                # Extract activity URN from the compound entityUrn.
+                activity_urn = _extract_inner_urn(entity_urn)
+                if activity_urn:
+                    thread_urn_map[activity_urn] = ugc_urn
         elif "Activity" in entity_type or "UpdateV2" in entity_type:
             activities[entity_urn] = entity
 
@@ -224,6 +235,10 @@ def _parse_feed_response(data: dict[str, Any], limit: int) -> list[Post]:
         # Extract share URN (needed for reposts).
         share_urn = _extract_share_urn(entity)
 
+        # Look up thread URN (ugcPost URN) for comment API.
+        inner_urn = _extract_inner_urn(urn)
+        thread_urn = thread_urn_map.get(inner_urn) if inner_urn else None
+
         posts.append(Post(
             urn=urn,
             text=text,
@@ -235,6 +250,7 @@ def _parse_feed_response(data: dict[str, Any], limit: int) -> list[Post]:
             media=media,
             created_at=created_at,
             share_urn=share_urn,
+            thread_urn=thread_urn,
         ))
 
         if len(posts) >= limit:
