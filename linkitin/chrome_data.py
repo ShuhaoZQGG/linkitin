@@ -124,6 +124,33 @@ def _navigate_and_extract_entities(path: str) -> dict:
     return {"included": entities}
 
 
+def resolve_thread_urn(post_urn: str) -> str:
+    """Navigate to a post page and extract its ugcPost thread_urn.
+
+    The comment API requires a ``urn:li:ugcPost:`` URN, which differs from
+    the activity URN.  The post detail page embeds SocialDetail entities in
+    ``<code>`` stores that carry the mapping.
+
+    Args:
+        post_urn: An activity or ugcPost URN (e.g., ``urn:li:activity:123``).
+
+    Returns:
+        The ``urn:li:ugcPost:`` thread URN, or empty string if not found.
+    """
+    _navigate_to(f"/feed/update/{post_urn}/")
+    _wait_for_page_data(max_wait=10.0)
+    entities = _extract_page_entities()
+
+    for entity in entities:
+        if "SocialDetail" not in entity.get("$type", ""):
+            continue
+        thread = entity.get("threadUrn", "")
+        if thread.startswith("urn:li:ugcPost:"):
+            return thread
+
+    return ""
+
+
 def extract_feed_data() -> dict:
     """Extract feed data, navigating to /feed/ if not already there.
 
@@ -167,7 +194,7 @@ _JS_EXTRACT_POSTS_FROM_DOM = """
         for (var j = 0; j < 20; j++) {
             card = card.parentElement;
             if (!card) break;
-            var dataUrn = (card.getAttribute && card.getAttribute('data-urn')) || '';
+            var dataUrn = ((card.getAttribute && card.getAttribute('data-urn')) || '').replace(/[/]+$/, '');
             if (!postUrn && dataUrn &&
                 (dataUrn.indexOf('activity') >= 0 || dataUrn.indexOf('ugcPost') >= 0 ||
                  dataUrn.indexOf('fsd_update') >= 0)) {
@@ -177,20 +204,33 @@ _JS_EXTRACT_POSTS_FROM_DOM = """
         }
         if (!card) continue;
 
-        // Second pass: look for /feed/update/ links inside the card.
+        // Second pass: look for /feed/update/ or /posts/ links inside the card.
+        // Home feed uses /feed/update/urn:li:activity:N URLs.
+        // Search results use /posts/author_slug-activityN-/ URLs.
         if (!postUrn) {
             var links = card.querySelectorAll('a[href]');
             for (var l = 0; l < links.length; l++) {
                 var href = links[l].getAttribute('href') || '';
-                if (href.indexOf('/feed/update/') < 0) continue;
                 var hrefDecoded = href;
                 try { hrefDecoded = decodeURIComponent(href); } catch(e) {}
-                var hm = hrefDecoded.match(/(urn:li:[a-zA-Z0-9_]+:[^?&# ]+)/);
-                if (hm) {
-                    var cUrn = hm[1];
-                    if (cUrn.indexOf('activity') >= 0 || cUrn.indexOf('ugcPost') >= 0 ||
-                        cUrn.indexOf('fsd_update') >= 0) {
-                        postUrn = cUrn;
+
+                if (href.indexOf('/feed/update/') >= 0) {
+                    // Home feed URL: extract embedded urn:li:* directly.
+                    var hm = hrefDecoded.match(/(urn:li:[a-zA-Z0-9_]+:[^?&# ]+)/);
+                    if (hm) {
+                        var cUrn = hm[1];
+                        if (cUrn.indexOf('activity') >= 0 || cUrn.indexOf('ugcPost') >= 0 ||
+                            cUrn.indexOf('fsd_update') >= 0) {
+                            postUrn = cUrn;
+                            break;
+                        }
+                    }
+                } else if (href.indexOf('/posts/') >= 0) {
+                    // Search results URL: /posts/slug-activityXXXXXXXXX-/
+                    // Extract the numeric activity ID after the last "activity" token.
+                    var am = hrefDecoded.match(/[^a-zA-Z]activity([0-9]{15,})/);
+                    if (am) {
+                        postUrn = 'urn:li:activity:' + am[1];
                         break;
                     }
                 }
@@ -289,7 +329,7 @@ def _extract_posts_from_dom() -> list[dict]:
         # Use the real LinkedIn URN captured from data-urn / feed update link.
         # Fall back to the synthetic dom URN only when no real URN was found
         # (these will be filtered out by isValidLinkedInPostID in Go).
-        urn = r.get("urn") or f"urn:li:dom:post:{i}"
+        urn = (r.get("urn") or f"urn:li:dom:post:{i}").rstrip("/")
         entities.append({
             "$type": "com.linkedin.voyager.dash.feed.Update",
             "entityUrn": urn,
@@ -392,6 +432,65 @@ def _scroll_and_collect(scrolls: int = 3) -> list[dict]:
     return all_results
 
 
+def extract_trending_via_api(
+    topic: str = "",
+    period: str = "past-24h",
+    from_followed: bool = True,
+    limit: int = 50,
+) -> dict:
+    """Fetch trending posts via the Voyager search API (Chrome proxy).
+
+    Uses the ``query=(...)`` RESTLi tuple syntax that the search/dash/clusters
+    endpoint expects.  Parameters must NOT be percent-encoded because
+    ``chrome_voyager_request`` concatenates them directly into the URL.
+
+    Args:
+        topic: Optional keyword to narrow the search (e.g., "AI").
+        period: Time filter — "past-24h", "past-week", or "past-month".
+        from_followed: If True, add the postedBy filter for followed users.
+        limit: Number of results to fetch (max 50 per page).
+
+    Returns:
+        Dict with ``included`` key containing real Voyager entities.
+
+    Raises:
+        LinkitinError: If the API call fails or returns no post entities.
+    """
+    from linkitin.chrome_proxy import chrome_voyager_request
+
+    # Build RESTLi query tuple — values must NOT be encoded.
+    qp_parts = ["resultType:List(CONTENT)"]
+    if period:
+        qp_parts.append(f"datePosted:List({period})")
+    if from_followed:
+        qp_parts.append("postedBy:List(following)")
+
+    query_params = ",".join(qp_parts)
+    kw_part = f"keywords:{topic}," if topic else ""
+    query = (
+        f"({kw_part}flagshipSearchIntent:SEARCH_SRP,"
+        f"queryParameters:({query_params}),"
+        f"includeFiltersInResponse:true)"
+    )
+
+    params: dict[str, str] = {
+        "q": "all",
+        "origin": "FACETED_SEARCH",
+        "query": query,
+        "count": str(min(limit, 50)),
+        "start": "0",
+    }
+
+    data, _ = chrome_voyager_request(
+        "GET", "/voyager/api/search/dash/clusters", params=params
+    )
+
+    if not data or not data.get("included"):
+        raise LinkitinError("Voyager search API returned no post entities")
+
+    return data
+
+
 def extract_trending_data(
     topic: str = "",
     period: str = "past-24h",
@@ -439,7 +538,7 @@ def extract_trending_data(
     for i, r in enumerate(results):
         author_name = r.get("author", "")
         text = r.get("text", "")
-        urn = r.get("urn") or f"urn:li:dom:post:{i}"
+        urn = (r.get("urn") or f"urn:li:dom:post:{i}").rstrip("/")
         entities.append({
             "$type": "com.linkedin.voyager.dash.feed.Update",
             "entityUrn": urn,
