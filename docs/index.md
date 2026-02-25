@@ -197,12 +197,22 @@ Fetch trending posts from LinkedIn, sorted by engagement within a time window.
 
 **Returns:** `list[Post]` — sorted by engagement (highest first).
 
+**Field availability:** Trending posts are extracted by scraping the search results DOM, which limits what fields are populated compared to `get_feed()`. See [Field availability by method](#field-availability-by-method) for details. In particular, some posts may have **synthetic URNs** (`urn:li:dom:post:N`) when the real URN cannot be extracted from the page — these posts cannot be commented on or reposted. Check for real URNs before interacting:
+
 ```python
-trending = await client.get_trending_posts(
-    topic="AI",
-    period="past-week",
-    limit=5,
-)
+trending = await client.get_trending_posts(topic="AI", period="past-week", limit=5)
+
+for post in trending:
+    # Only posts with real URNs support commenting
+    if "dom:post" in post.urn:
+        print(f"Skipping {post.author.first_name} — synthetic URN, read-only")
+        continue
+
+    # thread_urn is auto-resolved for posts with real URNs
+    await client.comment_post(
+        post.urn, "Great post!",
+        thread_urn=post.thread_urn or "",
+    )
 ```
 
 ---
@@ -382,6 +392,8 @@ Repost (reshare) an existing post. When `text` is empty, performs a plain repost
 
 **Raises:** `PostError`, `RateLimitError`
 
+**Requires `share_urn`** — only available from `get_feed()` and `get_my_posts()`. Trending and search posts do not have `share_urn`; check `post.share_urn is not None` before calling.
+
 ```python
 feed = await client.get_feed(limit=5)
 post = feed[0]
@@ -396,30 +408,38 @@ repost_urn = await client.repost(post.share_urn, text="Great insights!")
 #### `comment_post()`
 
 ```python
-async def comment_post(post_urn: str, text: str, parent_comment_urn: str = "") -> str
+async def comment_post(post_urn: str, text: str, parent_comment_urn: str = "", thread_urn: str = "") -> str
 ```
 
 Comment on a LinkedIn post. Pass `parent_comment_urn` to create a threaded reply.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `post_urn` | `str` | — | The URN of the post to comment on. Accepts `urn:li:activity:*`, `urn:li:ugcPost:*`, or `urn:li:fsd_update:*` formats. |
+| `post_urn` | `str` | — | The URN of the post to comment on. Accepts `urn:li:activity:*`, `urn:li:ugcPost:*`, or `urn:li:fsd_update:*` formats. Must be a **real** URN (not a synthetic `urn:li:dom:post:*`). |
 | `text` | `str` | — | The comment text. |
 | `parent_comment_urn` | `str` | `""` | Optional parent comment URN for threaded replies. |
+| `thread_urn` | `str` | `""` | The `ugcPost` URN required by the comment API. Pass `post.thread_urn` when available. If empty, the client attempts to derive it from `post_urn`. |
 
 **Returns:** `str` — the URN of the created comment.
 
 **Raises:** `PostError`, `RateLimitError`
 
+**Requires a real URN** — posts with synthetic URNs (`urn:li:dom:post:*`) from trending/search cannot be commented on. Always check `"dom:post" not in post.urn` before calling. Passing `thread_urn` improves reliability; it is auto-populated for feed posts and resolved for trending posts that have real URNs.
+
 ```python
 feed = await client.get_feed(limit=5)
 
-# Top-level comment
-comment_urn = await client.comment_post(feed[0].urn, "Great post!")
+# Top-level comment (thread_urn auto-populated from feed)
+comment_urn = await client.comment_post(
+    feed[0].urn, "Great post!",
+    thread_urn=feed[0].thread_urn or "",
+)
 
 # Threaded reply
 reply_urn = await client.comment_post(
-    feed[0].urn, "Thanks!", parent_comment_urn=comment_urn
+    feed[0].urn, "Thanks!",
+    parent_comment_urn=comment_urn,
+    thread_urn=feed[0].thread_urn or "",
 )
 ```
 
@@ -478,7 +498,7 @@ from linkitin.models import Post
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `urn` | `str` | — | LinkedIn URN identifier. |
+| `urn` | `str` | — | LinkedIn URN identifier. May be a real URN (`urn:li:activity:*`, `urn:li:ugcPost:*`) or a synthetic placeholder (`urn:li:dom:post:*`) when DOM scraping cannot extract the real URN. |
 | `text` | `str` | — | Post body text. |
 | `author` | `User \| None` | `None` | The post author. |
 | `likes` | `int` | `0` | Number of likes. |
@@ -487,7 +507,30 @@ from linkitin.models import Post
 | `impressions` | `int` | `0` | Number of impressions. |
 | `media` | `list[MediaItem]` | `[]` | Attached media items. |
 | `created_at` | `datetime \| None` | `None` | Timestamp of creation. |
-| `share_urn` | `str \| None` | `None` | Share URN for repost operations. Available from `get_feed()` and `get_my_posts()`; `None` for search/trending results. |
+| `share_urn` | `str \| None` | `None` | Share URN (`urn:li:share:*`) for repost operations. Required by `repost()`. Only available from `get_feed()` and `get_my_posts()`. |
+| `thread_urn` | `str \| None` | `None` | The `ugcPost` URN (`urn:li:ugcPost:*`) used by the comment API. Populated for feed posts (from Voyager entities) and auto-resolved for trending posts that have real URNs. |
+
+#### Field availability by method
+
+Not all methods populate all `Post` fields. The table below shows what to expect — and what it means for downstream operations:
+
+| Field | `get_feed()` | `get_my_posts()` | `get_trending_posts()` | `search_posts()` |
+|-------|:---:|:---:|:---:|:---:|
+| `urn` (real) | Always | Always | Some posts | Some posts |
+| `text` | Always | Always | Always | Always |
+| `author` | Always | Partial | Always | Always |
+| `likes` / `comments` / `reposts` | Always | Always | Always | Always |
+| `impressions` | Sometimes | Sometimes | No | No |
+| `media` | Sometimes | Sometimes | No | No |
+| `created_at` | Sometimes | Sometimes | No | No |
+| `share_urn` | Always | Always | No | No |
+| `thread_urn` | Always | No | Real-URN posts only | No |
+
+**What this means for client code:**
+
+- **Commenting** (`comment_post`) requires a real `urn` and ideally a `thread_urn`. Feed posts always have both. Trending posts with synthetic URNs (`urn:li:dom:post:*`) cannot be commented on — skip them with `"dom:post" not in post.urn`.
+- **Reposting** (`repost`) requires `share_urn`, which is only available from `get_feed()` and `get_my_posts()`. Trending and search posts cannot be reposted.
+- **Reading** (`text`, `author`, engagement counts) works for all methods. Trending/search posts are always readable even with synthetic URNs.
 
 ### `User`
 

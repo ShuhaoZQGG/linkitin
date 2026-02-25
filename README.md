@@ -89,20 +89,35 @@ async def main():
             scheduled_at=datetime.now(timezone.utc) + timedelta(hours=2),
         )
 
-        # Comment on a post
+        # Comment on a post (feed posts always have thread_urn)
         feed = await client.get_feed(limit=5)
-        comment_urn = await client.comment_post(feed[0].urn, "Great post!")
+        comment_urn = await client.comment_post(
+            feed[0].urn, "Great post!",
+            thread_urn=feed[0].thread_urn or "",
+        )
 
         # Reply to a comment (threaded)
         reply_urn = await client.comment_post(
-            feed[0].urn, "Thanks!", parent_comment_urn=comment_urn
+            feed[0].urn, "Thanks!",
+            parent_comment_urn=comment_urn,
+            thread_urn=feed[0].thread_urn or "",
         )
 
-        # Repost a post from the feed
+        # Repost a post from the feed (requires share_urn)
         repost_urn = await client.repost(feed[0].share_urn)
 
         # Repost with your thoughts
         repost_urn = await client.repost(feed[0].share_urn, text="Great insights!")
+
+        # Comment on a trending post (only works for posts with real URNs)
+        trending = await client.get_trending_posts(topic="AI", period="past-week")
+        for post in trending:
+            if "dom:post" in post.urn:
+                continue  # synthetic URN — read-only
+            await client.comment_post(
+                post.urn, "Interesting!",
+                thread_urn=post.thread_urn or "",
+            )
 
 asyncio.run(main())
 ```
@@ -136,14 +151,14 @@ All requests go through a token-bucket rate limiter: **10 requests per minute** 
 | `get_my_posts(limit=20)` | Fetch your posts |
 | `search_posts(keywords, limit=20)` | Search posts by keywords |
 | `get_feed(limit=20)` | Fetch home feed |
-| `get_trending_posts(topic, period, limit, from_followed, scrolls)` | Fetch trending posts sorted by engagement |
+| `get_trending_posts(topic, period, limit, from_followed, scrolls)` | Fetch trending posts sorted by engagement. Some posts may have synthetic URNs (read-only). |
 | `create_post(text, visibility="PUBLIC")` | Create a text post |
 | `upload_image(image_data, filename)` | Upload an image, returns media URN |
 | `create_post_with_image(text, image_data, filename, visibility="PUBLIC")` | Create post with image |
 | `create_scheduled_post(text, scheduled_at, visibility="PUBLIC")` | Schedule a text post; `scheduled_at` rounded to next 15-min slot |
 | `create_scheduled_post_with_image(text, image_data, filename, scheduled_at, visibility="PUBLIC")` | Schedule a post with image; `scheduled_at` rounded to next 15-min slot |
-| `comment_post(post_urn, text, parent_comment_urn="")` | Comment on a post (or reply to a comment) |
-| `repost(share_urn, text="")` | Repost (reshare) an existing post |
+| `comment_post(post_urn, text, parent_comment_urn="", thread_urn="")` | Comment on a post (or reply to a comment). Requires a real URN. |
+| `repost(share_urn, text="")` | Repost (reshare) an existing post. Requires `share_urn` (feed/my_posts only). |
 | `delete_post(post_urn)` | Delete a post by URN |
 | `close()` | Close the HTTP session |
 
