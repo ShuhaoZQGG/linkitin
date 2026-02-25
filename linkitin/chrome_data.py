@@ -159,14 +159,43 @@ _JS_EXTRACT_POSTS_FROM_DOM = """
     for (var i = 0; i < reactionBtns.length; i++) {
         var btn = reactionBtns[i];
 
-        // Walk up to card container.
+        // Walk up to card container, collecting data-urn along the way.
+        // We check data-urn BEFORE the size cutoff so we don't miss it on
+        // the element that first exceeds 300 chars (the post card itself).
         var card = btn;
+        var postUrn = '';
         for (var j = 0; j < 20; j++) {
             card = card.parentElement;
             if (!card) break;
+            var dataUrn = (card.getAttribute && card.getAttribute('data-urn')) || '';
+            if (!postUrn && dataUrn &&
+                (dataUrn.indexOf('activity') >= 0 || dataUrn.indexOf('ugcPost') >= 0 ||
+                 dataUrn.indexOf('fsd_update') >= 0)) {
+                postUrn = dataUrn;
+            }
             if ((card.textContent || '').length > 300) break;
         }
         if (!card) continue;
+
+        // Second pass: look for /feed/update/ links inside the card.
+        if (!postUrn) {
+            var links = card.querySelectorAll('a[href]');
+            for (var l = 0; l < links.length; l++) {
+                var href = links[l].getAttribute('href') || '';
+                if (href.indexOf('/feed/update/') < 0) continue;
+                var hrefDecoded = href;
+                try { hrefDecoded = decodeURIComponent(href); } catch(e) {}
+                var hm = hrefDecoded.match(/(urn:li:[a-zA-Z0-9_]+:[^?&# ]+)/);
+                if (hm) {
+                    var cUrn = hm[1];
+                    if (cUrn.indexOf('activity') >= 0 || cUrn.indexOf('ugcPost') >= 0 ||
+                        cUrn.indexOf('fsd_update') >= 0) {
+                        postUrn = cUrn;
+                        break;
+                    }
+                }
+            }
+        }
 
         var fullText = (card.textContent || '').replace(/\\s+/g, ' ').trim();
 
@@ -226,6 +255,7 @@ _JS_EXTRACT_POSTS_FROM_DOM = """
         }
 
         results.push({
+            urn: postUrn,
             author: authorName,
             text: postText.substring(0, 2000),
             likes: likes,
@@ -256,7 +286,10 @@ def _extract_posts_from_dom() -> list[dict]:
     for i, r in enumerate(results):
         author_name = r.get("author", "")
         text = r.get("text", "")
-        urn = f"urn:li:dom:post:{i}"
+        # Use the real LinkedIn URN captured from data-urn / feed update link.
+        # Fall back to the synthetic dom URN only when no real URN was found
+        # (these will be filtered out by isValidLinkedInPostID in Go).
+        urn = r.get("urn") or f"urn:li:dom:post:{i}"
         entities.append({
             "$type": "com.linkedin.voyager.dash.feed.Update",
             "entityUrn": urn,
@@ -406,7 +439,7 @@ def extract_trending_data(
     for i, r in enumerate(results):
         author_name = r.get("author", "")
         text = r.get("text", "")
-        urn = f"urn:li:dom:post:{i}"
+        urn = r.get("urn") or f"urn:li:dom:post:{i}"
         entities.append({
             "$type": "com.linkedin.voyager.dash.feed.Update",
             "entityUrn": urn,
