@@ -144,16 +144,53 @@ async def get_trending_posts(
     Returns:
         List of Post objects sorted by engagement (highest first).
     """
+    loop = asyncio.get_event_loop()
+
+    # Strategy 1: Direct Voyager API call via Chrome proxy (returns real URNs
+    # with thread_urn data from SocialDetail entities).
+    try:
+        from linkitin.chrome_data import extract_trending_via_api
+
+        data = await loop.run_in_executor(
+            None, extract_trending_via_api, topic, period, from_followed, max(limit * 4, 50)
+        )
+        posts = _parse_feed_response(data, limit)
+        if posts:
+            return posts
+        # Empty response — fall through to DOM scraping.
+    except (ImportError, FileNotFoundError):
+        raise LinkitinError("trending posts require Chrome proxy mode")
+    except Exception as e:
+        print(f"[linkitin] Voyager search API failed ({e}), falling back to DOM scraping...",
+              file=sys.stderr)
+
+    # Strategy 2: DOM scraping fallback (may return synthetic urn:li:dom:post:N URNs).
     try:
         from linkitin.chrome_data import extract_trending_data
 
-        loop = asyncio.get_event_loop()
         data = await loop.run_in_executor(
             None, extract_trending_data, topic, period, from_followed, scrolls
         )
-        return _parse_feed_response(data, limit)
+        posts = _parse_feed_response(data, limit)
     except (ImportError, FileNotFoundError):
         raise LinkitinError("trending posts require Chrome proxy mode")
+
+    # Resolve thread_urn for posts that have a real URN but no thread_urn.
+    # This navigates to each post's page to extract the ugcPost URN needed
+    # by the comment API (~3-5s per post).
+    try:
+        from linkitin.chrome_data import resolve_thread_urn
+
+        for post in posts:
+            if post.thread_urn or "dom:post" in post.urn:
+                continue
+            thread = await loop.run_in_executor(None, resolve_thread_urn, post.urn)
+            if thread:
+                post.thread_urn = thread
+    except Exception as e:
+        print(f"[linkitin] thread_urn resolution failed ({e})", file=sys.stderr)
+
+    return posts
 
 
 def _parse_feed_response(data: dict[str, Any], limit: int) -> list[Post]:
